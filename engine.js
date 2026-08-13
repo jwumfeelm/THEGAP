@@ -239,3 +239,55 @@ function computeQuiz(answers, QUESTIONS) {
   });
   return { axes: sum.map((v, i) => cnt[i] ? v / cnt[i] : 0) };
 }
+
+/* ============================================================
+   대운(大運) — 인생의 방향이 바뀌는 10년 단위 전환점
+   ============================================================ */
+function findTerm(jd, dir){
+  // λ ≡ 15 (mod 30) 인 순간 = 12절(節) 경계
+  const seg = t => Math.floor(norm360(sunLongitude(t) - 315) / 30);
+  const s0 = seg(jd);
+  let lo = jd, hi = jd + dir * 40;
+  // 경계를 포함하는 구간으로 좁힌 뒤 이분 탐색
+  let step = dir * 0.5, t = jd;
+  for (let i = 0; i < 100; i++) {
+    const t2 = t + step;
+    if (seg(t2) !== s0) { lo = dir > 0 ? t : t2; hi = dir > 0 ? t2 : t; break; }
+    t = t2;
+  }
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (seg(mid) === s0) { if (dir > 0) lo = mid; else hi = mid; }
+    else { if (dir > 0) hi = mid; else lo = mid; }
+  }
+  return dir > 0 ? hi : lo;
+}
+
+function computeDaewoon(y, mo, d, h, mi, isMale, saju){
+  const jd = toJD(y, mo, d, h - 9, mi);
+  const yangYear = saju.pillars[0].s % 2 === 0;
+  const forward = (yangYear === isMale);          // 양남·음녀 순행
+  const dir = forward ? 1 : -1;
+  const boundary = findTerm(jd, dir);
+  const days = Math.abs(boundary - jd);
+  const start = Math.max(1, Math.round(days / 3));  // 대운수
+
+  const now = new Date();
+  const age = Math.floor((now - new Date(y, mo - 1, d)) / 31557600000);
+
+  // 현재 대운 구간
+  let n = age < start ? -1 : Math.floor((age - start) / 10);
+  const lastAge  = n < 0 ? null : start + n * 10;
+  const nextAge  = n < 0 ? start : start + (n + 1) * 10;
+
+  // 대운 간지 — 월주에서 순/역으로 n+1 칸
+  const m = saju.pillars[1];
+  const k = (n + 1) * dir;
+  const dwStem   = ((m.s + k) % 10 + 10) % 10;
+  const dwBranch = ((m.b + k) % 12 + 12) % 12;
+  const dwEl = STEM_EL[dwStem];
+
+  return { start, age, lastAge, nextAge, forward,
+           stem: dwStem, branch: dwBranch, el: dwEl,
+           span: n < 0 ? null : [lastAge, lastAge + 9] };
+}
