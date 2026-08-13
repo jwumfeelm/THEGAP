@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>네 개의 판정</title>
+<meta name="description" content="사주, 별자리, MBTI, 심리테스트. 네 개의 체계가 한 사람을 두고 각자 다른 말을 합니다.">
+<meta property="og:title" content="네 개의 판정">
+<meta property="og:description" content="타고난 당신과 스스로 아는 당신은 얼마나 떨어져 있습니까.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C0D10;        /* 배경 */
+  --ink-2:#15171C;      /* 카드 */
+  --line:#24272E;       /* 괘선 */
+  --gray:#7E848F;       /* 보조 텍스트 */
+  --gray-2:#B4B9C2;
+  --white:#F2F4F7;
+  --acc:#F5D000;        /* feelm 옐로우 */
+  --acc-dim:rgba(245,208,0,.16);
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'Pretendard','Pretendard Variable',-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ink);color:var(--white);font-family:var(--sans);
+  font-size:16px;line-height:1.62;letter-spacing:-.011em;
+  min-height:100svh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.016) 0 1px,transparent 1px 96px),
+    radial-gradient(120% 80% at 50% -10%,rgba(245,208,0,.05),transparent 60%);
+}
+.wrap{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:0 22px 100px}
+
+/* ── 공통 타이포 ── */
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;font-weight:500;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--gray);
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
+h1{font-size:clamp(30px,7.6vw,46px);line-height:1.16;letter-spacing:-.035em;font-weight:800}
+h2{font-size:20px;line-height:1.35;letter-spacing:-.028em;font-weight:700}
+.lead{color:var(--gray-2);font-size:15.5px;line-height:1.75}
+.rule{height:1px;background:var(--line);border:0}
+
+/* ── 화면 전환 ── */
+.screen{display:none;animation:in .5s cubic-bezier(.2,.7,.2,1)}
+.screen.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── 인트로 ── */
+.hero{padding:clamp(64px,16vh,120px) 0 40px}
+.judges{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);margin:34px 0 30px;
+}
+.judge{background:var(--ink);padding:16px 10px 14px;text-align:center}
+.judge .mk{height:22px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.judge .nm{font-size:12.5px;font-weight:600;letter-spacing:-.02em}
+.judge .yr{font-family:var(--mono);font-size:9.5px;color:var(--gray);letter-spacing:.06em;margin-top:3px}
+
+/* ── 버튼 ── */
+.btn{
+  display:block;width:100%;padding:17px 20px;border:0;cursor:pointer;
+  background:var(--acc);color:#000;font-family:var(--sans);
+  font-size:15.5px;font-weight:700;letter-spacing:-.02em;
+  transition:filter .18s,transform .18s;
+}
+.btn:hover{filter:brightness(1.09)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{background:var(--line);color:#4E535C;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--gray-2);border:1px solid var(--line);font-weight:500}
+.btn-ghost:hover{border-color:var(--gray);color:var(--white);filter:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ── 입력 ── */
+.sec{padding:44px 0 0}
+.field{margin:26px 0}
+.field>label{display:block;font-size:13px;font-weight:600;color:var(--gray-2);margin-bottom:9px;letter-spacing:-.015em}
+.row{display:flex;gap:8px}
+input[type=number],select{
+  flex:1;width:100%;background:var(--ink-2);border:1px solid var(--line);color:var(--white);
+  font-family:var(--mono);font-size:16px;padding:13px 12px;border-radius:0;
+  appearance:none;transition:border-color .16s;
+}
+input:focus,select:focus{border-color:var(--acc);outline:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--gray) 50%),linear-gradient(135deg,var(--gray) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.hint{font-size:12px;color:var(--gray);margin-top:7px;line-height:1.55}
+
+/* ── MBTI 토글 ── */
+.mb{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mb button{
+  background:var(--ink-2);border:1px solid var(--line);color:var(--gray);
+  padding:14px 0;cursor:pointer;font-family:var(--mono);font-size:11px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;transition:.16s;
+}
+.mb button b{font-size:19px;font-weight:600;color:var(--white);line-height:1}
+.mb button:hover{border-color:var(--gray)}
+.mb button.sel{border-color:var(--acc);background:var(--acc-dim)}
+.mb button.sel b{color:var(--acc)}
+
+/* ── 문항 ── */
+.qhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.qbar{height:1px;background:var(--line);position:relative;margin-bottom:34px}
+.qbar i{position:absolute;left:0;top:0;height:1px;background:var(--acc);transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.qtext{font-size:20px;line-height:1.5;letter-spacing:-.03em;font-weight:700;margin-bottom:22px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{
+  text-align:left;background:var(--ink-2);border:1px solid var(--line);color:var(--gray-2);
+  padding:15px 16px;cursor:pointer;font-family:var(--sans);font-size:14.5px;line-height:1.5;
+  letter-spacing:-.018em;transition:.15s;display:flex;gap:12px;align-items:flex-start;
+}
+.opt:hover{border-color:var(--gray);color:var(--white)}
+.opt .ix{font-family:var(--mono);font-size:10.5px;color:var(--gray);padding-top:3px;flex-shrink:0}
+
+/* ── 결과 ── */
+.score{padding:40px 0 8px;text-align:center}
+.score .big{
+  font-family:var(--mono);font-weight:300;font-size:clamp(76px,22vw,124px);
+  line-height:.92;letter-spacing:-.05em;color:var(--acc);
+}
+.score .big small{font-size:.3em;font-weight:400;letter-spacing:0;margin-left:2px}
+.verdict{font-size:18px;font-weight:700;letter-spacing:-.03em;margin-top:16px;line-height:1.45}
+.legend{display:flex;flex-wrap:wrap;gap:14px 18px;margin:26px 0 6px;justify-content:center}
+.lg{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--gray)}
+
+/* 축 스트립 */
+.strip{padding:22px 0 20px;border-top:1px solid var(--line)}
+.strip:first-of-type{border-top:0}
+.slabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.slabel .nm{font-size:13px;font-weight:700;letter-spacing:-.02em}
+.slabel .gp{font-family:var(--mono);font-size:11px;color:var(--gray)}
+.slabel .gp.hot{color:var(--acc)}
+.poles{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--gray);letter-spacing:.08em;margin-bottom:5px}
+.note{font-size:12.5px;color:var(--gray);line-height:1.6;margin-top:9px}
+
+/* 카드 */
+.card{border:1px solid var(--line);padding:20px;margin:14px 0}
+.card .tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--acc);margin-bottom:9px}
+.card .tag.mute{color:var(--gray)}
+.card h3{font-size:16.5px;font-weight:700;letter-spacing:-.028em;margin-bottom:7px;line-height:1.4}
+.card p{font-size:14px;color:var(--gray-2);line-height:1.68}
+
+/* 사주 원국 */
+.pill4{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.pl{background:var(--ink);padding:12px 4px;text-align:center}
+.pl .t{font-family:var(--mono);font-size:9px;color:var(--gray);letter-spacing:.14em}
+.pl .g{font-size:24px;line-height:1.22;font-weight:500;margin-top:5px}
+.pl .k{font-family:var(--mono);font-size:9.5px;color:var(--gray);margin-top:2px}
+.el{display:flex;gap:1px;margin-top:1px;background:var(--line);border:1px solid var(--line);border-top:0}
+.el div{background:var(--ink);flex:1;text-align:center;padding:8px 2px}
+.el .v{font-family:var(--mono);font-size:12px;color:var(--acc)}
+.el .n{font-size:10px;color:var(--gray);margin-top:1px}
+
+.foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);font-size:11.5px;color:#5C616B;line-height:1.7}
+.foot b{color:var(--gray);font-weight:600}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:30px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════════ 1. 인트로 ══════════ -->
+<section id="s-intro" class="screen on">
+  <div class="hero">
+    <div class="eyebrow">네 개의 판정</div>
+    <h1 style="margin-top:18px">서로 모르는 채<br>만들어진 네 개의 이론이<br>당신을 두고 다투게 합니다.</h1>
+    <p class="lead" style="margin-top:22px">
+      동아시아 명리, 바빌로니아 천문, 융의 유형론, 그리고 당신의 자기 보고.
+      출발점도 시대도 다른 네 체계에 같은 사람을 넣으면 어떤 항목은 놀랍도록 일치하고
+      어떤 항목은 정반대로 갈립니다. 이 테스트는 유형을 알려주지 않습니다.
+      <b style="color:var(--white)">네 판정이 얼마나 어긋나는지</b>를 알려줍니다.
+    </p>
+
+    <div class="judges">
+      <div class="judge"><div class="mk"><svg width="13" height="13"><rect width="11" height="11" x="1" y="1" fill="#F2F4F7"/></svg></div>
+        <div class="nm">사주</div><div class="yr">기원전 · 중국</div></div>
+      <div class="judge"><div class="mk"><svg width="14" height="14"><circle cx="7" cy="7" r="5.2" fill="none" stroke="#F2F4F7" stroke-width="1.6"/></svg></div>
+        <div class="nm">별자리</div><div class="yr">기원전 · 바빌론</div></div>
+      <div class="judge"><div class="mk"><svg width="14" height="13"><path d="M7 1.4 13 11.6H1z" fill="#F5D000"/></svg></div>
+        <div class="nm">MBTI</div><div class="yr">1944 · 미국</div></div>
+      <div class="judge"><div class="mk"><svg width="14" height="14"><path d="M7 1.6 12.4 7 7 12.4 1.6 7z" fill="none" stroke="#F5D000" stroke-width="1.6"/></svg></div>
+        <div class="nm">심리테스트</div><div class="yr">지금 · 당신</div></div>
+    </div>
+
+    <p class="lead" style="font-size:14px">
+      앞의 둘은 생년월일시만 있으면 당신 동의 없이 계산됩니다. 뒤의 둘은 당신이 직접 답해야 나옵니다.
+      <b style="color:var(--white)">타고난 나</b>와 <b style="color:var(--white)">스스로 아는 나</b>, 그 사이의 거리를 재는 것이 이 테스트의 전부입니다.
+    </p>
+    <div class="actions"><button class="btn" onclick="go('birth')">시작하기 · 약 3분</button></div>
+  </div>
+</section>
+
+<!-- ══════════ 2. 생년월일시 ══════════ -->
+<section id="s-birth" class="screen">
+  <div class="sec">
+    <div class="eyebrow">01 — 당신이 고르지 않은 정보</div>
+    <h2 style="margin:14px 0 10px">태어난 순간</h2>
+    <p class="lead" style="font-size:14.5px">사주와 별자리는 여기서 자동으로 계산됩니다. 아무것도 선택하지 않아도 됩니다.</p>
+
+    <div class="field">
+      <label for="by">생년월일 (양력)</label>
+      <div class="row">
+        <input class="num" id="by" type="number" placeholder="1988" min="1900" max="2030" inputmode="numeric" style="flex:1.7">
+        <input class="num" id="bm" type="number" placeholder="5" min="1" max="12" inputmode="numeric">
+        <input class="num" id="bd" type="number" placeholder="17" min="1" max="31" inputmode="numeric">
+      </div>
+      <p class="hint">음력 생일만 안다면 양력으로 변환해 입력해 주세요.</p>
+    </div>
+
+    <div class="field">
+      <label for="bh">태어난 시각</label>
+      <div class="row">
+        <select id="bh"></select>
+        <select id="bmin"></select>
+      </div>
+      <p class="hint">시각을 모르면 <b>모름</b>을 고르세요. 시주와 상승궁·달자리 정밀도가 낮아지지만 나머지는 그대로 나옵니다.</p>
+    </div>
+
+    <div class="actions"><button class="btn" id="birth-next" onclick="submitBirth()">다음</button></div>
+  </div>
+</section>
+
+<!-- ══════════ 3. MBTI ══════════ -->
+<section id="s-mbti" class="screen">
+  <div class="sec">
+    <div class="eyebrow">02 — 당신이 고른 정보</div>
+    <h2 style="margin:14px 0 10px">알고 있는 MBTI</h2>
+    <p class="lead" style="font-size:14.5px">네 글자를 그대로 눌러주세요. 모르면 건너뛰어도 됩니다. 나머지 세 체계로 계속 진행합니다.</p>
+    <div class="field"><div class="mb" id="mb"></div></div>
+    <div class="actions">
+      <button class="btn" id="mbti-next" onclick="go('quiz')" disabled>다음</button>
+      <button class="btn btn-ghost" onclick="skipMbti()">MBTI를 모릅니다</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4. 심리테스트 ══════════ -->
+<section id="s-quiz" class="screen">
+  <div class="sec">
+    <div class="qhead"><span class="eyebrow">03 — 스스로 아는 나</span><span class="eyebrow num" id="qn">01 / 11</span></div>
+    <div class="qbar"><i id="qfill" style="width:9%"></i></div>
+    <div class="qtext" id="qt"></div>
+    <div class="opts" id="qo"></div>
+    <div style="margin-top:18px"><button class="btn btn-ghost" id="qback" onclick="qBack()" style="width:auto;padding:9px 16px;font-size:12.5px">이전 문항</button></div>
+  </div>
+</section>
+
+<!-- ══════════ 5. 결과 ══════════ -->
+<section id="s-result" class="screen"><div id="result"></div></section>
+
+</div>
+
+<script src="engine.js"></script>
+<script>
+/* ══════════ 문항 ══════════ */
+const AX = [
+  {nm:'발산 · 수렴', neg:'수렴', pos:'발산'},
+  {nm:'추진 · 지속', neg:'지속', pos:'추진'},
+  {nm:'논리 · 정서', neg:'정서', pos:'논리'},
+  {nm:'구체 · 관념', neg:'관념', pos:'구체'},
+  {nm:'자기 · 관계', neg:'관계', pos:'자기'}
+];
+
+const QUESTIONS = [
+  {axis:0,q:'처음 보는 사람 여덟 명과 두 시간을 보내야 합니다.',opts:[
+    {t:'끝날 때쯤엔 절반 이상과 연락처를 주고받는다',v:90},
+    {t:'몇 명과는 제법 깊은 이야기를 하게 된다',v:35},
+    {t:'옆자리 한 사람하고만 조용히 이야기한다',v:-35},
+    {t:'시간이 언제 가나 세면서 버틴다',v:-90}]},
+  {axis:0,q:'아주 좋은 일이 생겼습니다. 가장 먼저 하는 일은.',opts:[
+    {t:'단톡방에 바로 올린다',v:90},
+    {t:'가까운 몇 명에게 따로 알린다',v:35},
+    {t:'딱 한 사람에게만 말한다',v:-35},
+    {t:'일단 며칠은 혼자 두고 본다',v:-90}]},
+  {axis:1,q:'새로 배우고 싶은 것이 생겼습니다.',opts:[
+    {t:'오늘 밤에 등록부터 해버린다',v:90},
+    {t:'이번 주 안에는 시작한다',v:35},
+    {t:'하던 것을 정리하고 나서 시작한다',v:-35},
+    {t:'지금 하는 것부터 끝까지 간다',v:-90}]},
+  {axis:1,q:'3년째 써온 방식이 있는데, 더 나은 방법을 발견했습니다.',opts:[
+    {t:'당장 바꾼다',v:90},
+    {t:'일부만 먼저 바꿔본다',v:35},
+    {t:'충분히 검증되면 바꾼다',v:-35},
+    {t:'익숙한 방식을 유지한다',v:-90}]},
+  {axis:2,q:'친구가 명백히 잘못된 결정을 내리려 합니다.',opts:[
+    {t:'근거를 정리해서 조목조목 말한다',v:90},
+    {t:'문제점은 짚되 선택은 존중한다',v:35},
+    {t:'왜 그러고 싶은지 마음을 먼저 묻는다',v:-35},
+    {t:'겪어봐야 아는 일이니 옆에 있어준다',v:-90}]},
+  {axis:2,q:'팀원이 울면서 자기 실수를 보고합니다.',opts:[
+    {t:'무엇이 잘못됐는지 원인부터 파악한다',v:90},
+    {t:'상황을 정리한 뒤 마음을 살핀다',v:35},
+    {t:'진정시킨 다음에 이야기를 시작한다',v:-35},
+    {t:'우선 괜찮다고 말해준다',v:-90}]},
+  {axis:3,q:'여행 계획을 세울 때 당신은.',opts:[
+    {t:'시간표와 예약 내역을 표로 정리한다',v:90},
+    {t:'큰 틀과 필수 예약만 잡아둔다',v:35},
+    {t:'가고 싶은 분위기 정도만 정한다',v:-35},
+    {t:'가서 정한다',v:-90}]},
+  {axis:3,q:'어떤 설명이 더 잘 들어옵니까.',opts:[
+    {t:'숫자와 실제로 있었던 사례',v:90},
+    {t:'사례 중심에 요약 한 줄',v:35},
+    {t:'비유와 그림',v:-35},
+    {t:'큰 개념과 작동 원리',v:-90}]},
+  {axis:4,q:'일요일 저녁, 아무 일정이 없습니다.',opts:[
+    {t:'혼자 하고 싶던 것을 한다',v:90},
+    {t:'혼자 있되 연락은 열어둔다',v:35},
+    {t:'누구든 만날 사람을 찾아본다',v:-35},
+    {t:'먼저 연락해서 약속을 만든다',v:-90}]},
+  {axis:4,q:'중요한 결정을 앞두고 있습니다.',opts:[
+    {t:'내가 정하고 통보한다',v:90},
+    {t:'정한 다음 의견을 들어본다',v:35},
+    {t:'의견을 충분히 듣고 내가 정한다',v:-35},
+    {t:'관련된 사람들과 합의해서 정한다',v:-90}]},
+  {axis:4,q:'"이번 성과는 팀 덕분"이라는 말을 들으면.',opts:[
+    {t:'내 몫은 분명히 있었다고 생각한다',v:90},
+    {t:'절반쯤은 내 몫이라고 본다',v:35},
+    {t:'대체로 맞는 말이라 여긴다',v:-35},
+    {t:'실제로 팀이 아니었으면 못 했다',v:-90}]}
+];
+
+/* ══════════ 상태 ══════════ */
+const S = {birth:null, mbti:{}, ans:[], qi:0, noTime:false};
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  window.scrollTo({top:0,behavior:'instant'});
+  if(id==='quiz') renderQ();
+}
+
+/* ── 시각 셀렉트 ── */
+(function(){
+  const h=document.getElementById('bh'), m=document.getElementById('bmin');
+  h.innerHTML='<option value="">모름</option>'+Array.from({length:24},(_,i)=>
+    `<option value="${i}">${String(i).padStart(2,'0')}시</option>`).join('');
+  m.innerHTML=Array.from({length:12},(_,i)=>
+    `<option value="${i*5}">${String(i*5).padStart(2,'0')}분</option>`).join('');
+  h.addEventListener('change',()=>{ m.disabled = h.value===''; m.style.opacity = h.value===''?.35:1; });
+})();
+
+function submitBirth(){
+  const g=id=>document.getElementById(id);
+  const y=+g('by').value, mo=+g('bm').value, d=+g('bd').value;
+  const hv=g('bh').value;
+  if(!(y>=1900&&y<=2030)||!(mo>=1&&mo<=12)||!(d>=1&&d<=31)){
+    alert('생년월일을 다시 확인해 주세요.'); return;
+  }
+  S.noTime = (hv==='');
+  S.birth = {y,mo,d,h:S.noTime?12:+hv,mi:S.noTime?0:+g('bmin').value};
+  go('mbti');
+}
+
+/* ── MBTI 토글 ── */
+(function(){
+  const P=[['ei','E','I'],['sn','S','N'],['tf','T','F'],['jp','J','P']];
+  document.getElementById('mb').innerHTML=P.map(([k,a,b])=>
+    `<div style="display:flex;flex-direction:column;gap:6px">
+      <button data-k="${k}" data-v="1"><b>${a}</b></button>
+      <button data-k="${k}" data-v="0"><b>${b}</b></button>
+    </div>`).join('');
+  document.getElementById('mb').addEventListener('click',e=>{
+    const t=e.target.closest('button'); if(!t) return;
+    const k=t.dataset.k;
+    document.querySelectorAll(`#mb button[data-k="${k}"]`).forEach(x=>x.classList.remove('sel'));
+    t.classList.add('sel'); S.mbti[k]=t.dataset.v==='1';
+    document.getElementById('mbti-next').disabled = Object.keys(S.mbti).length<4;
+  });
+})();
+function skipMbti(){ S.mbti=null; go('quiz'); }
+
+/* ── 문항 ── */
+function renderQ(){
+  const q=QUESTIONS[S.qi];
+  document.getElementById('qn').textContent=String(S.qi+1).padStart(2,'0')+' / 11';
+  document.getElementById('qfill').style.width=((S.qi+1)/11*100)+'%';
+  document.getElementById('qt').textContent=q.q;
+  document.getElementById('qo').innerHTML=q.opts.map((o,i)=>
+    `<button class="opt" onclick="pick(${i})"><span class="ix">${String.fromCharCode(65+i)}</span><span>${o.t}</span></button>`).join('');
+  document.getElementById('qback').style.visibility = S.qi?'visible':'hidden';
+}
+function pick(i){
+  S.ans[S.qi]=i;
+  if(S.qi<10){ S.qi++; renderQ(); window.scrollTo({top:0,behavior:'instant'}); }
+  else finish();
+}
+function qBack(){ if(S.qi){S.qi--;renderQ();} }
+
+/* ══════════ 결과 ══════════ */
+const SYS=[
+  {key:'saju', nm:'사주',   camp:0, mark:'sq'},
+  {key:'astro',nm:'별자리', camp:0, mark:'ci'},
+  {key:'mbti', nm:'MBTI',   camp:1, mark:'tr'},
+  {key:'quiz', nm:'심리테스트',camp:1,mark:'di'}
+];
+
+function markSVG(kind,x,y){
+  const W='#F2F4F7', Y='#F5D000';
+  if(kind==='sq') return `<rect x="${x-4.5}" y="${y-4.5}" width="9" height="9" fill="${W}"/>`;
+  if(kind==='ci') return `<circle cx="${x}" cy="${y}" r="4.6" fill="none" stroke="${W}" stroke-width="1.7"/>`;
+  if(kind==='tr') return `<path d="M${x} ${y-5.4} L${x+5} ${y+4} L${x-5} ${y+4} Z" fill="${Y}"/>`;
+  return `<path d="M${x} ${y-5.6} L${x+5} ${y} L${x} ${y+5.6} L${x-5} ${y} Z" fill="none" stroke="${Y}" stroke-width="1.7"/>`;
+}
+
+function calc(){
+  const b=S.birth;
+  const saju=computeSaju(b.y,b.mo,b.d,b.h,b.mi,true);
+  const astro=computeAstro(b.y,b.mo,b.d,b.h,b.mi);
+  const mbti=computeMbti(S.mbti);
+  const quiz=computeQuiz(S.ans,QUESTIONS);
+  return {saju,astro,mbti,quiz};
+}
+
+function finish(){
+  const R=calc();
+  const V={saju:R.saju.axes, astro:R.astro.axes, mbti:R.mbti?R.mbti.axes:null, quiz:R.quiz.axes};
+  const active=SYS.filter(s=>V[s.key]);
+
+  const pre=[],post=[],gap=[],spread=[];
+  for(let i=0;i<5;i++){
+    const p=(V.saju[i]+V.astro[i])/2;
+    const q=V.mbti?(V.mbti[i]+V.quiz[i])/2:V.quiz[i];
+    pre.push(p); post.push(q); gap.push(Math.abs(p-q));
+    const vs=active.map(s=>V[s.key][i]);
+    spread.push(Math.max(...vs)-Math.min(...vs));
+  }
+  const dist=Math.min(100,Math.round(gap.reduce((a,c)=>a+c,0)/5*1.15));
+
+  // 축마다 체계별 판정 강도가 달라(MBTI는 자기·관계 축에서만 약하게 발언)
+  // 원점수로 비교하면 특정 축만 계속 뽑힌다. 축별 평균 spread로 정규화한다.
+  const NORM=[0.874,0.985,0.917,0.942,1.454];
+  const rel=spread.map((v,i)=>v*NORM[i]);
+
+  let uni=0, con=0, uBest=-1e9;
+  for(let i=0;i<5;i++){
+    const vs=active.map(s=>V[s.key][i]);
+    const mean=vs.reduce((a,c)=>a+c,0)/vs.length;
+    const sc=Math.abs(mean)-rel[i]*0.55;
+    if(sc>uBest){ uBest=sc; uni=i; }
+    if(rel[i]>rel[con]) con=i;
+  }
+
+  // 불일치 축에서 가장 멀리 떨어진 두 체계
+  const cv=active.map(s=>({nm:s.nm,v:V[s.key][con]})).sort((a,b)=>a.v-b.v);
+  const far=[cv[cv.length-1], cv[0]];
+  const uniMean=active.map(s=>V[s.key][uni]).reduce((a,c)=>a+c,0)/active.length;
+
+  document.getElementById('result').innerHTML=
+    resultHTML(R,V,active,pre,post,gap,spread,dist,uni,con,far,uniMean);
+  go('result');
+  requestAnimationFrame(()=>document.querySelectorAll('.mkl').forEach((e,i)=>{
+    setTimeout(()=>e.style.opacity=1, 90+i*32);
+  }));
+}
+
+function verdictText(d){
+  if(d>=68) return ['타고난 결과 하나로 정리되지 않는 사람','네 체계의 판정이 크게 엇갈립니다. 당신은 태어난 대로 살고 있지 않거나, 태어난 것보다 더 넓게 살고 있습니다. 어느 쪽이든 한 문장으로 요약되지 않습니다.'];
+  if(d>=45) return ['절반은 타고난 대로, 절반은 만들어온 대로','기질과 자기인식이 어떤 축에서는 붙고 어떤 축에서는 벌어집니다. 대부분의 사람이 여기 있고, 벌어진 축이 어디인지가 당신의 특징입니다.'];
+  if(d>=25) return ['대체로 태어난 대로 살고 있는 사람','네 체계가 서로 비슷한 말을 합니다. 자기 기질을 거스르지 않는 자리에 있다는 뜻이고, 그래서 남들이 당신을 파악하는 데 오래 걸리지 않습니다.'];
+  return ['네 개의 판정이 거의 겹치는 사람','드문 경우입니다. 무엇으로 보든 같은 사람이 나옵니다. 뚜렷하다는 뜻이고, 동시에 다른 모습을 기대하는 사람에게는 예측 가능하다는 뜻이기도 합니다.'];
+}
+
+function axisWord(i,v){
+  const a=AX[i];
+  const m=Math.abs(v);
+  const side=v>=0?a.pos:a.neg;
+  if(m<18) return '중간';
+  return (m>60?'뚜렷한 ':'') + side;
+}
+
+function resultHTML(R,V,active,pre,post,gap,spread,dist,uni,con,far,uniMean){
+  const [vt,vd]=verdictText(dist);
+  const tight = spread[uni] <= 95;
+  const P=R.saju.pillars;
+  const px=v=>3+(v+100)/200*94;
+
+  let strips='';
+  for(let i=0;i<5;i++){
+    const hot=spread[i]>=90;
+    let marks='';
+    active.forEach(s=>{
+      const v=V[s.key][i];
+      marks+=`<span class="mkl" style="opacity:0;position:absolute;left:${px(v)}%;top:50%;transform:translate(-50%,-50%);transition:opacity .4s">
+        <svg width="14" height="14" style="display:block">${markSVG(s.mark,7,7)}</svg></span>`;
+    });
+    const a=px(pre[i]), b=px(post[i]);
+    strips+=`<div class="strip">
+      <div class="slabel"><span class="nm">${AX[i].nm}</span>
+        <span class="gp ${hot?'hot':''} num">격차 ${Math.round(gap[i])}</span></div>
+      <div class="poles"><span>← ${AX[i].neg}</span><span>${AX[i].pos} →</span></div>
+      <div style="position:relative;height:42px">
+        <div style="position:absolute;left:3%;right:3%;top:50%;height:1px;background:var(--line)"></div>
+        <div style="position:absolute;left:50%;top:calc(50% - 7px);width:1px;height:14px;background:#3A3E47"></div>
+        <div style="position:absolute;left:${Math.min(a,b)}%;width:${Math.abs(b-a)}%;top:calc(50% - 2px);height:4px;background:var(--acc);opacity:.32"></div>
+        ${marks}
+      </div>
+      <p class="note">사주 ${axisWord(i,V.saju[i])} · 별자리 ${axisWord(i,V.astro[i])}${V.mbti?' · MBTI '+axisWord(i,V.mbti[i]):''} · 심리테스트 ${axisWord(i,V.quiz[i])}</p>
+    </div>`;
+  }
+
+  const mbtiStr = S.mbti ? (S.mbti.ei?'E':'I')+(S.mbti.sn?'S':'N')+(S.mbti.tf?'T':'F')+(S.mbti.jp?'J':'P') : null;
+
+  return `
+  <div class="score">
+    <div class="eyebrow">선천과 후천의 거리</div>
+    <div class="big num">${dist}<small>%</small></div>
+    <div class="verdict">${vt}</div>
+    <p class="lead" style="font-size:14.5px;margin-top:12px;text-align:left">${vd}</p>
+  </div>
+
+  <div class="legend">
+    <span class="lg"><svg width="12" height="12">${markSVG('sq',6,6)}</svg>사주</span>
+    <span class="lg"><svg width="12" height="12">${markSVG('ci',6,6)}</svg>별자리</span>
+    ${V.mbti?`<span class="lg"><svg width="12" height="12">${markSVG('tr',6,6)}</svg>MBTI</span>`:''}
+    <span class="lg"><svg width="12" height="12">${markSVG('di',6,6)}</svg>심리테스트</span>
+    <span class="lg"><span style="width:14px;height:4px;background:var(--acc);opacity:.32;display:inline-block"></span>선천↔후천 격차</span>
+  </div>
+
+  <div style="margin-top:14px">${strips}</div>
+
+  <div class="card">
+    <div class="tag ${tight?'':'mute'}">${tight?'만장일치':'가장 이견이 적은 축'}</div>
+    <h3>${AX[uni].nm} — ${tight?'네 체계가 같은 말을 합니다':'그나마 의견이 모입니다'}</h3>
+    <p>${tight
+      ? `서로 아무 관계 없는 ${active.length}개의 이론이 이 축에서만큼은 <b style="color:var(--white)">${axisWord(uni,uniMean)}</b> 쪽을 가리킵니다.
+         당신에 대해 가장 이견이 없는 부분이고, 아마 스스로도 이미 알고 있을 겁니다.`
+      : `이 축에서도 판정이 완전히 겹치지는 않지만, 대체로 <b style="color:var(--white)">${axisWord(uni,uniMean)}</b> 쪽으로 기웁니다.
+         나머지 축에서는 이보다 더 크게 갈립니다.`}</p>
+  </div>
+
+  <div class="card">
+    <div class="tag">최대 불일치</div>
+    <h3>${AX[con].nm} — 판정이 정면으로 갈립니다</h3>
+    <p><b style="color:var(--white)">${far[0].nm}</b>는 <b style="color:var(--white)">${axisWord(con,far[0].v)}</b> 쪽이라 하고,
+    <b style="color:var(--white)">${far[1].nm}</b>는 <b style="color:var(--white)">${axisWord(con,far[1].v)}</b> 쪽이라 합니다.
+    ${far.some(f=>f.nm==='심리테스트')&&far.some(f=>f.nm==='사주')
+      ? '타고난 기질과 지금 자신을 보는 눈이 여기서 가장 크게 어긋납니다.'
+      : '같은 사람을 두고 두 체계가 정반대 결론에 도달했습니다.'}
+    이 축에서 당신은 매번 두 번 생각하고 있을 가능성이 큽니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="tag mute">계산 근거 — 사주 원국</div>
+    <div class="pill4">${P.map(p=>`<div class="pl"><div class="t">${p.label}</div>
+      <div class="g">${STEM[p.s]}<br>${BRANCH[p.b]}</div>
+      <div class="k">${STEM_KR[p.s]}${BRANCH_KR[p.b]}</div></div>`).join('')}</div>
+    <div class="el">${R.saju.el.map((v,i)=>`<div><div class="v num">${Math.round(v*100)}</div><div class="n">${EL_KR[i]} ${EL_HANJA[i]}</div></div>`).join('')}</div>
+    <p class="note">일간 <b style="color:var(--acc)">${STEM[R.saju.dayStem]}(${STEM_KR[R.saju.dayStem]})</b> · 오행 분포는 지장간 비중을 반영한 백분율입니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="tag mute">계산 근거 — 천궁</div>
+    <div class="pill4" style="grid-template-columns:repeat(3,1fr)">
+      <div class="pl"><div class="t">태양 ☉</div><div class="g" style="font-size:14px;line-height:1.5;padding:5px 0">${SIGN_KR[R.astro.sun]}</div></div>
+      <div class="pl"><div class="t">달 ☽</div><div class="g" style="font-size:14px;line-height:1.5;padding:5px 0">${SIGN_KR[R.astro.moon]}</div></div>
+      <div class="pl"><div class="t">상승 ↑</div><div class="g" style="font-size:14px;line-height:1.5;padding:5px 0">${SIGN_KR[R.astro.asc]}</div></div>
+    </div>
+    <p class="note">태양은 기본 성향, 달은 정서, 상승궁은 남에게 보이는 모습을 맡습니다.${mbtiStr?` 후천 진영에는 <b style="color:var(--white)">${mbtiStr}</b>가 함께 들어갔습니다.`:' MBTI 없이 심리테스트만으로 후천 진영을 구성했습니다.'}</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="share(${dist})">결과 복사하기</button>
+    <button class="btn btn-ghost" onclick="location.reload()">다시 하기</button>
+  </div>
+
+  <div class="foot">
+    <b>계산에 대하여.</b> 사주는 절기(태양황경) 기준으로 년·월주를, 율리우스일 기준으로 일주를 산출하며 서울 진태양시 32분 보정을 적용합니다.
+    상승궁은 서울 좌표(37.57N / 126.98E) 기준입니다.${S.noTime?' 태어난 시각을 정오로 가정했으므로 시주·상승궁·달자리는 참고용입니다.':''}<br><br>
+    <b>이 결과에 대하여.</b> 네 체계 모두 성격을 과학적으로 측정하는 도구가 아닙니다. 서로 다른 렌즈를 겹쳐 보는 재미를 위한 것이며,
+    진로나 관계에 관한 판단의 근거로 쓰기에는 적절하지 않습니다.
+  </div>`;
+}
+
+function share(d){
+  const t=`네 개의 판정 — 선천과 후천의 거리 ${d}%\n사주·별자리·MBTI·심리테스트가 나를 두고 얼마나 다른 말을 하는지 재봤습니다.\n${location.href.split('#')[0]}`;
+  if(navigator.share){ navigator.share({text:t}).catch(()=>{}); return; }
+  navigator.clipboard.writeText(t).then(()=>alert('결과를 복사했습니다.')).catch(()=>alert(t));
+}
+</script>
+</body>
+</html>
